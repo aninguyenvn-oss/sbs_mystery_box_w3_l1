@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mystery Box – Reading Game</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+
+  :root {
+    --sky: #1a1a2e;
+    --panel: #16213e;
+    --card: #0f3460;
+    --accent: #e94560;
+    --gold: #f5a623;
+    --green: #2ecc71;
+    --red: #e74c3c;
+    --purple: #9b59b6;
+    --text: #eaf0fb;
+    --muted: #8899bb;
+    --box1: #f5a623;
+    --box2: #2ecc71;
+    --box3: #9b59b6;
+    --radius: 16px;
+    --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--sky);
+    color: var(--text);
+    height: 100%;
+    overflow: hidden;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ───── STARS BG ───── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,.4) 0%, transparent 0%),
+      radial-gradient(1px 1px at 30% 45%, rgba(255,255,255,.3) 0%, transparent 0%),
+      radial-gradient(1px 1px at 60% 20%, rgba(255,255,255,.5) 0%, transparent 0%),
+      radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,.3) 0%, transparent 0%),
+      radial-gradient(1px 1px at 50% 80%, rgba(255,255,255,.4) 0%, transparent 0%),
+      radial-gradient(1px 1px at 20% 70%, rgba(255,255,255,.2) 0%, transparent 0%),
+      radial-gradient(1px 1px at 90% 30%, rgba(255,255,255,.4) 0%, transparent 0%),
+      radial-gradient(1px 1px at 70% 90%, rgba(255,255,255,.3) 0%, transparent 0%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ───── HEADER ───── */
+  header {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 28px;
+    background: rgba(15,52,96,.7);
+    backdrop-filter: blur(12px);
+    border-bottom: 2px solid rgba(233,69,96,.5);
+  }
+
+  .logo {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.6rem;
+    color: var(--gold);
+    letter-spacing: 1px;
+  }
+  .logo span { color: var(--accent); }
+
+  .header-btns { display: flex; gap: 10px; }
+
+  /* ───── BUTTONS ───── */
+  .btn {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800; font-size: .9rem;
+    border: none; border-radius: 10px;
+    padding: 10px 20px; cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+    letter-spacing: .4px;
+  }
+  .btn:active { transform: scale(.95); }
+  .btn-accent { background: var(--accent); color: #fff; box-shadow: 0 4px 16px rgba(233,69,96,.4); }
+  .btn-accent:hover { box-shadow: 0 6px 24px rgba(233,69,96,.6); transform: translateY(-2px); }
+  .btn-gold { background: var(--gold); color: #1a1a2e; box-shadow: 0 4px 16px rgba(245,166,35,.4); }
+  .btn-gold:hover { box-shadow: 0 6px 24px rgba(245,166,35,.6); transform: translateY(-2px); }
+  .btn-ghost { background: transparent; color: var(--muted); border: 2px solid rgba(136,153,187,.3); }
+  .btn-ghost:hover { border-color: var(--muted); color: var(--text); }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-red { background: var(--red); color: #fff; }
+  .btn-sm { font-size: .78rem; padding: 6px 14px; border-radius: 8px; }
+
+  /* ───── LAYOUT ───── */
+  #app {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr clamp(240px, 22vw, 340px);
+    gap: clamp(12px, 1.5vw, 24px);
+    padding: clamp(12px, 1.5vw, 24px);
+    width: 80%;
+    max-width: 1400px;
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
+
+  /* ───── SCOREBOARD ───── */
+  .scoreboard {
+    background: var(--panel);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.07);
+  }
+
+  .scoreboard-header {
+    background: rgba(233,69,96,.15);
+    border-bottom: 2px solid rgba(233,69,96,.3);
+    padding: 14px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .scoreboard-header h3 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem; color: var(--gold);
+  }
+
+  .team-list { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+
+  .team-row {
+    display: grid;
+    grid-template-columns: 28px 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,.04);
+    border-radius: 10px;
+    padding: 10px 14px;
+    border: 2px solid transparent;
+    transition: border .2s, background .2s;
+    cursor: default;
+  }
+
+  .team-row.active-team {
+    border-color: var(--gold);
+    background: rgba(245,166,35,.08);
+  }
+
+  .team-num {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: .8rem;
+    flex-shrink: 0;
+  }
+
+  .team-name-display { font-weight: 700; font-size: .95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .team-score { font-family: 'Fredoka One', cursive; font-size: 1.5rem; color: var(--gold); min-width: 48px; text-align: right; }
+  .team-buzz-btn {
+    font-size: .7rem; padding: 5px 10px; border-radius: 8px;
+    font-weight: 800; border: none; cursor: pointer;
+    background: var(--accent); color: #fff;
+    transition: transform .1s, opacity .2s;
+  }
+  .team-buzz-btn:hover { transform: scale(1.05); }
+  .team-buzz-btn:disabled { opacity: .3; cursor: not-allowed; transform: none; }
+
+  /* ───── GAME PANEL ───── */
+  .game-panel { display: flex; flex-direction: column; gap: 20px; }
+
+  /* ───── SENTENCE CARD ───── */
+  .sentence-card {
+    background: var(--panel);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(255,255,255,.07);
+    overflow: hidden;
+  }
+
+  .sentence-card-header {
+    background: rgba(245,166,35,.12);
+    border-bottom: 2px solid rgba(245,166,35,.25);
+    padding: 12px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .sentence-card-header h3 { font-family: 'Fredoka One', cursive; font-size: 1rem; color: var(--gold); }
+
+  .sentence-display {
+    padding: 28px 28px 20px;
+    text-align: center;
+  }
+
+  .sentence-text {
+    font-size: clamp(1.2rem, 2.2vw, 2rem);
+    font-weight: 800;
+    line-height: 1.4;
+    color: var(--text);
+    min-height: 56px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .sentence-counter {
+    margin-top: 10px;
+    font-size: .8rem; color: var(--muted);
+  }
+
+  .sentence-actions {
+    padding: 0 20px 20px;
+    display: flex; gap: 10px; justify-content: center;
+  }
+
+  /* ───── BOXES AREA ───── */
+  .boxes-section {
+    background: var(--panel);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(255,255,255,.07);
+    overflow: hidden;
+  }
+
+  .boxes-header {
+    background: rgba(155,89,182,.12);
+    border-bottom: 2px solid rgba(155,89,182,.25);
+    padding: 12px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .boxes-header h3 { font-family: 'Fredoka One', cursive; font-size: 1rem; color: var(--purple); }
+
+  .boxes-grid {
+    padding: 24px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .mystery-box {
+    border-radius: 14px;
+    padding: clamp(16px, 2vw, 28px) 12px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: transform .2s, box-shadow .2s, border-color .2s;
+    position: relative; overflow: hidden;
+    min-height: clamp(100px, 12vh, 150px);
+  }
+
+  .mystery-box::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,.08), transparent);
+    pointer-events: none;
+  }
+
+  .mystery-box:hover:not(:disabled) {
+    transform: translateY(-6px) scale(1.03);
+    box-shadow: 0 16px 40px rgba(0,0,0,.5);
+  }
+
+  .mystery-box:disabled { cursor: not-allowed; opacity: .5; transform: none; }
+
+  .box-1 { background: linear-gradient(135deg, #b07d1a, #f5a623); border-color: rgba(245,166,35,.5); }
+  .box-2 { background: linear-gradient(135deg, #1a7a45, #2ecc71); border-color: rgba(46,204,113,.5); }
+  .box-3 { background: linear-gradient(135deg, #6a2d8f, #9b59b6); border-color: rgba(155,89,182,.5); }
+
+  .box-icon { font-size: 2.2rem; }
+  .box-label { font-family: 'Fredoka One', cursive; font-size: 1.1rem; color: #fff; }
+  .box-sub { font-size: .75rem; color: rgba(255,255,255,.7); }
+
+  .box-reveal {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2rem; color: #fff;
+    animation: popIn .4s cubic-bezier(.17,.67,.35,1.3);
+  }
+
+  @keyframes popIn {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* ───── STATUS BAR ───── */
+  .status-bar {
+    background: var(--panel);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(255,255,255,.07);
+    padding: 14px 24px;
+    display: flex; align-items: center; gap: 12px;
+    font-weight: 700;
+  }
+
+  .status-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+
+  .status-text { font-size: .95rem; }
+  .status-team { color: var(--gold); }
+
+  /* ───── OVERLAYS ───── */
+  .overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(10,10,20,.85);
+    backdrop-filter: blur(8px);
+    align-items: center; justify-content: center;
+  }
+  .overlay.show { display: flex; }
+
+  /* ───── SENTENCE POPUP ───── */
+  .sentence-popup {
+    background: var(--card);
+    border-radius: 24px;
+    padding: 40px 48px;
+    max-width: 700px; width: 90%;
+    text-align: center;
+    border: 3px solid var(--gold);
+    box-shadow: 0 0 60px rgba(245,166,35,.3);
+    animation: slideUp .35s cubic-bezier(.17,.67,.35,1.2);
+  }
+
+  @keyframes slideUp {
+    0% { transform: translateY(40px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+
+  .popup-eyebrow {
+    font-size: .8rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 2px; color: var(--gold); margin-bottom: 8px;
+  }
+  .popup-sentence {
+    font-size: 2.2rem; font-weight: 800; line-height: 1.4;
+    color: var(--text); margin-bottom: 28px;
+  }
+  .popup-team-btns {
+    display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
+    margin-bottom: 20px;
+  }
+  .popup-team-btn {
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 800; font-size: .95rem;
+    border: none; cursor: pointer;
+    color: #fff;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .popup-team-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,.4); }
+
+  .popup-close-row { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
+
+  /* ───── RESULT POPUP ───── */
+  .result-popup {
+    background: var(--card);
+    border-radius: 24px;
+    padding: 48px;
+    max-width: 460px; width: 90%;
+    text-align: center;
+    animation: slideUp .35s cubic-bezier(.17,.67,.35,1.2);
+  }
+
+  .result-popup.gain { border: 3px solid var(--green); box-shadow: 0 0 60px rgba(46,204,113,.3); }
+  .result-popup.lose { border: 3px solid var(--red); box-shadow: 0 0 60px rgba(231,76,60,.3); }
+
+  .result-emoji { font-size: 4rem; margin-bottom: 12px; }
+  .result-title { font-family: 'Fredoka One', cursive; font-size: 2rem; margin-bottom: 8px; }
+  .result-pts { font-family: 'Fredoka One', cursive; font-size: 3.5rem; margin-bottom: 6px; }
+  .result-pts.gain { color: var(--green); }
+  .result-pts.lose { color: var(--red); }
+  .result-team-name { font-size: 1rem; color: var(--muted); margin-bottom: 28px; }
+
+  /* ───── SETTINGS PANEL ───── */
+  .settings-popup {
+    background: var(--panel);
+    border-radius: 24px;
+    padding: 36px;
+    max-width: 620px; width: 95%;
+    max-height: 85vh;
+    overflow-y: auto;
+    border: 2px solid rgba(255,255,255,.1);
+    animation: slideUp .3s ease;
+  }
+
+  .settings-popup h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.6rem; color: var(--gold); margin-bottom: 24px;
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .settings-section { margin-bottom: 28px; }
+  .settings-section h4 {
+    font-size: .75rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 2px; color: var(--muted); margin-bottom: 12px;
+  }
+
+  .team-count-row {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+  }
+  .team-count-row label { font-weight: 700; }
+  .count-control {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,.07);
+    border-radius: 10px;
+    padding: 4px;
+  }
+  .count-btn {
+    width: 32px; height: 32px;
+    border-radius: 8px; border: none;
+    background: var(--accent); color: #fff;
+    font-size: 1.2rem; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .count-btn:hover { filter: brightness(1.1); }
+  .count-value {
+    min-width: 32px; text-align: center;
+    font-family: 'Fredoka One', cursive; font-size: 1.3rem; color: var(--gold);
+  }
+
+  .team-names-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+
+  .team-name-input-row {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,.06);
+    border-radius: 10px; padding: 8px 12px;
+  }
+  .team-name-input-row label { font-size: .8rem; font-weight: 700; color: var(--muted); min-width: 28px; }
+  .team-name-input-row input {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: var(--text); font-family: 'Nunito', sans-serif; font-size: .9rem; font-weight: 700;
+  }
+
+  .sentence-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .sentence-item {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,.05); border-radius: 10px; padding: 10px 14px;
+  }
+  .sentence-item span { flex: 1; font-size: .9rem; }
+  .sentence-item .del-btn {
+    background: none; border: none; cursor: pointer; color: var(--accent);
+    font-size: 1rem; opacity: .6; padding: 2px 6px; border-radius: 6px;
+    transition: opacity .2s;
+  }
+  .sentence-item .del-btn:hover { opacity: 1; background: rgba(233,69,96,.15); }
+
+  .add-sentence-row {
+    display: flex; gap: 8px; margin-top: 10px;
+  }
+  .add-sentence-row input {
+    flex: 1; background: rgba(255,255,255,.07); border: 2px solid rgba(255,255,255,.1);
+    border-radius: 10px; padding: 10px 14px;
+    color: var(--text); font-family: 'Nunito', sans-serif; font-size: .9rem;
+    outline: none; transition: border-color .2s;
+  }
+  .add-sentence-row input:focus { border-color: var(--gold); }
+
+  /* ───── ROUND END ───── */
+  .round-end-popup {
+    background: var(--card);
+    border-radius: 24px;
+    padding: 48px 40px;
+    max-width: 520px; width: 90%;
+    text-align: center;
+    border: 3px solid var(--gold);
+    box-shadow: 0 0 80px rgba(245,166,35,.25);
+    animation: slideUp .35s cubic-bezier(.17,.67,.35,1.2);
+  }
+  .round-end-popup h2 { font-family: 'Fredoka One', cursive; font-size: 2rem; color: var(--gold); margin-bottom: 24px; }
+  .final-scores { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+  .final-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(255,255,255,.06); border-radius: 10px; padding: 12px 18px;
+  }
+  .final-row.winner { background: rgba(245,166,35,.12); border: 2px solid var(--gold); }
+  .final-name { font-weight: 700; }
+  .final-pts { font-family: 'Fredoka One', cursive; font-size: 1.5rem; color: var(--gold); }
+
+  /* ───── BUZZ ANIMATION ───── */
+  @keyframes buzzFlash {
+    0% { background: rgba(245,166,35,0); }
+    30% { background: rgba(245,166,35,.25); }
+    100% { background: rgba(245,166,35,0); }
+  }
+  .buzz-flash { animation: buzzFlash .6s ease; }
+
+  /* ───── PROGRESS ───── */
+  .progress-bar-wrap {
+    height: 4px; background: rgba(255,255,255,.08);
+    border-radius: 2px; overflow: hidden; margin: 0 20px 16px;
+  }
+  .progress-bar-fill {
+    height: 100%; background: var(--gold);
+    border-radius: 2px; transition: width .4s;
+  }
+
+  /* ───── RESPONSIVE ───── */
+  @media(max-width:900px) {
+    .main-grid {
+      grid-template-columns: 1fr;
+      width: 92%;
+    }
+    .scoreboard { order: -1; }
+    .team-list { flex-direction: row; flex-wrap: wrap; }
+    .team-row { flex: 0 0 calc(50% - 4px); }
+    .sentence-text { font-size: 1.3rem; }
+    .popup-sentence { font-size: 1.5rem; }
+  }
+
+  @media(max-width:600px) {
+    .main-grid { width: 96%; gap: 10px; padding: 10px; }
+    .sentence-text { font-size: 1.1rem; }
+    .boxes-grid { gap: 10px; padding: 14px; }
+    .mystery-box { min-height: 100px; padding: 16px 8px; }
+    .box-icon { font-size: 1.6rem; }
+    .box-label { font-size: .9rem; }
+    .team-score { font-size: 1.2rem; }
+    .logo { font-size: 1.2rem; }
+  }
+
+  @media(min-width:1600px) {
+    .main-grid { width: 75%; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Mystery <span>Box</span> 📦</div>
+  <div class="header-btns">
+    <button class="btn btn-ghost" onclick="openSettings()">⚙️ Settings</button>
+    <button class="btn btn-accent" onclick="resetGame()">🔄 New Game</button>
+  </div>
+</header>
+
+<div id="app">
+  <div class="main-grid">
+
+    <!-- LEFT: Game panel -->
+    <div class="game-panel">
+
+      <!-- Status bar -->
+      <div class="status-bar">
+        <div class="status-dot"></div>
+        <div class="status-text" id="statusText">Press <strong>Next Round</strong> to start!</div>
+      </div>
+
+      <!-- Sentence card -->
+      <div class="sentence-card">
+        <div class="sentence-card-header">
+          <h3>📖 Current Sentence</h3>
+          <span id="sentenceCounter" class="sentence-counter" style="font-size:.8rem;color:var(--muted)"></span>
+        </div>
+        <div class="sentence-display">
+          <div class="sentence-text" id="sentenceText">—</div>
+        </div>
+        <div class="progress-bar-wrap" id="progressWrap" style="display:none">
+          <div class="progress-bar-fill" id="progressFill"></div>
+        </div>
+        <div class="sentence-actions">
+          <button class="btn btn-gold" id="nextRoundBtn" onclick="nextRound()" style="font-size:1rem;padding:14px 36px;">🎲 Next Round</button>
+        </div>
+      </div>
+
+      <!-- Mystery Boxes -->
+      <div class="boxes-section">
+        <div class="boxes-header">
+          <h3>🎁 Mystery Boxes</h3>
+          <span id="boxesTeamLabel" style="font-size:.8rem;color:var(--muted)">— Waiting for team —</span>
+        </div>
+        <div class="boxes-grid">
+          <button class="mystery-box box-1" id="box0" onclick="chooseBox(0)" disabled>
+            <div class="box-icon">📦</div>
+            <div class="box-label">Box 1</div>
+            <div class="box-sub">Choose me!</div>
+          </button>
+          <button class="mystery-box box-2" id="box1" onclick="chooseBox(1)" disabled>
+            <div class="box-icon">📦</div>
+            <div class="box-label">Box 2</div>
+            <div class="box-sub">Choose me!</div>
+          </button>
+          <button class="mystery-box box-3" id="box2" onclick="chooseBox(2)" disabled>
+            <div class="box-icon">📦</div>
+            <div class="box-label">Box 3</div>
+            <div class="box-sub">Choose me!</div>
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /game-panel -->
+
+    <!-- RIGHT: Scoreboard -->
+    <div class="scoreboard">
+      <div class="scoreboard-header">
+        <h3>🏆 Scoreboard</h3>
+        <button class="btn btn-ghost btn-sm" onclick="openSettings()">Edit Teams</button>
+      </div>
+      <div class="team-list" id="teamList"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ SENTENCE POPUP ═══ -->
+<div class="overlay" id="sentenceOverlay">
+  <div class="sentence-popup">
+    <div class="popup-eyebrow">📖 Read this sentence</div>
+    <div class="popup-sentence" id="popupSentenceText"></div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:20px">Which team buzzed first? Tap their name!</p>
+    <div class="popup-team-btns" id="popupTeamBtns"></div>
+    <div class="popup-close-row">
+      <button class="btn btn-ghost btn-sm" onclick="closeSentencePopup()">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RESULT POPUP ═══ -->
+<div class="overlay" id="resultOverlay">
+  <div class="result-popup" id="resultPopup">
+    <div class="result-emoji" id="resultEmoji"></div>
+    <div class="result-title" id="resultTitle"></div>
+    <div class="result-pts" id="resultPts"></div>
+    <div class="result-team-name" id="resultTeamName"></div>
+    <button class="btn btn-gold" onclick="closeResult()">Continue →</button>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS POPUP ═══ -->
+<div class="overlay" id="settingsOverlay">
+  <div class="settings-popup">
+    <h2>⚙️ Game Settings</h2>
+
+    <div class="settings-section">
+      <h4>Number of Teams</h4>
+      <div class="team-count-row">
+        <div class="count-control">
+          <button class="count-btn" onclick="changeTeamCount(-1)">−</button>
+          <div class="count-value" id="teamCountDisplay">4</div>
+          <button class="count-btn" onclick="changeTeamCount(1)">+</button>
+        </div>
+        <span style="color:var(--muted);font-size:.85rem">teams (2–8)</span>
+      </div>
+      <h4 style="margin-bottom:12px">Team Names</h4>
+      <div class="team-names-grid" id="teamNamesGrid"></div>
+    </div>
+
+    <div class="settings-section">
+      <h4>Sentences</h4>
+      <div class="sentence-list" id="sentenceList"></div>
+      <div class="add-sentence-row">
+        <input type="text" id="newSentenceInput" placeholder="Type a new sentence…" maxlength="120"
+          onkeydown="if(event.key==='Enter') addSentence()">
+        <button class="btn btn-green btn-sm" onclick="addSentence()">+ Add</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeSettings()">Cancel</button>
+      <button class="btn btn-gold" onclick="applySettings()">✓ Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ GAME OVER POPUP ═══ -->
+<div class="overlay" id="gameOverOverlay">
+  <div class="round-end-popup">
+    <div style="font-size:3rem;margin-bottom:12px">🏆</div>
+    <h2>Game Over!</h2>
+    <div class="final-scores" id="finalScores"></div>
+    <button class="btn btn-gold" onclick="resetGame(); document.getElementById('gameOverOverlay').classList.remove('show')">🔄 Play Again</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+const TEAM_COLORS = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#e91e63'];
+
+const DEFAULT_SENTENCES = [
+  "This bird has a beak.",
+  "This bird has feathers.",
+  "The bird eats seeds.",
+  "The bird eats flowers.",
+  "The bird drinks water.",
+  "The parrot can fly.",
+  "The parrot has food.",
+  "The parrot carries seeds."
+];
+
+let state = {
+  teams: [],
+  sentences: [...DEFAULT_SENTENCES],
+  usedSentences: [],
+  currentSentenceIdx: null,
+  currentTeamIdx: null,   // team that buzzed
+  phase: 'idle',          // idle | buzzer | boxes
+  boxPoints: [],          // randomised each round: [pts, pts, pts]
+  negativeBoxIdx: null,
+  roundsPlayed: 0
+};
+
+// Settings draft
+let draft = {
+  teamCount: 4,
+  teamNames: ['Team 1','Team 2','Team 3','Team 4','Team 5','Team 6','Team 7','Team 8']
+};
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+function init() {
+  draft.teamCount = 4;
+  draft.teamNames = ['Team 1','Team 2','Team 3','Team 4','Team 5','Team 6','Team 7','Team 8'];
+  state.teams = Array.from({length: draft.teamCount}, (_, i) => ({
+    name: draft.teamNames[i],
+    score: 0,
+    color: TEAM_COLORS[i]
+  }));
+  state.sentences = [...DEFAULT_SENTENCES];
+  state.usedSentences = [];
+  state.currentSentenceIdx = null;
+  state.currentTeamIdx = null;
+  state.phase = 'idle';
+  state.roundsPlayed = 0;
+  renderAll();
+}
+
+// ══════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════
+function renderAll() {
+  renderTeamList();
+  renderButtons();
+  renderCounter();
+}
+
+function renderTeamList() {
+  const el = document.getElementById('teamList');
+  el.innerHTML = state.teams.map((t, i) => `
+    <div class="team-row ${state.currentTeamIdx === i ? 'active-team' : ''}" id="teamRow${i}">
+      <div class="team-num" style="background:${t.color}">${i+1}</div>
+      <div class="team-name-display" title="${t.name}">${t.name}</div>
+      <div class="team-score">${t.score}</div>
+    </div>
+  `).join('');
+}
+
+function renderButtons() {
+  const nextBtn = document.getElementById('nextRoundBtn');
+  const boxes = [0,1,2].map(i => document.getElementById('box'+i));
+
+  if (state.phase === 'idle') {
+    nextBtn.disabled = false;
+    nextBtn.textContent = '🎲 Next Round';
+    boxes.forEach(b => b.disabled = true);
+  } else if (state.phase === 'boxes') {
+    nextBtn.disabled = true;
+    boxes.forEach(b => { b.disabled = false; });
+    boxes.forEach((b, i) => {
+      b.innerHTML = `
+        <div class="box-icon">📦</div>
+        <div class="box-label">Box ${i+1}</div>
+        <div class="box-sub">Choose me!</div>`;
+    });
+    const label = document.getElementById('boxesTeamLabel');
+    label.textContent = state.currentTeamIdx !== null
+      ? `${state.teams[state.currentTeamIdx].name}'s turn`
+      : '—';
+  } else {
+    nextBtn.disabled = true;
+    boxes.forEach(b => b.disabled = true);
+  }
+}
+
+function renderCounter() {
+  const total = state.sentences.length;
+  const used = state.usedSentences.length;
+  document.getElementById('sentenceCounter').textContent =
+    `${used} / ${total} used`;
+
+  const wrap = document.getElementById('progressWrap');
+  const fill = document.getElementById('progressFill');
+  if (total > 0) {
+    wrap.style.display = 'block';
+    fill.style.width = `${(used/total)*100}%`;
+  }
+}
+
+// ══════════════════════════════════════
+// GAME FLOW
+// ══════════════════════════════════════
+function nextRound() {
+  const available = state.sentences
+    .map((s,i) => i)
+    .filter(i => !state.usedSentences.includes(i));
+
+  if (available.length === 0) {
+    showGameOver();
+    return;
+  }
+
+  const pick = available[Math.floor(Math.random() * available.length)];
+  state.currentSentenceIdx = pick;
+  state.usedSentences.push(pick);
+  state.currentTeamIdx = null;
+  state.phase = 'buzzer';
+
+  const s = state.sentences[pick];
+  document.getElementById('sentenceText').textContent = s;
+  document.getElementById('statusText').innerHTML = 'Tap the team that buzzed first!';
+
+  const btnsEl = document.getElementById('popupTeamBtns');
+  btnsEl.innerHTML = state.teams.map((t, i) => `
+    <button class="popup-team-btn" style="background:${t.color}"
+      onclick="teamBuzzed(${i})">⚡ ${t.name}</button>
+  `).join('');
+
+  document.getElementById('popupSentenceText').textContent = s;
+  document.getElementById('sentenceOverlay').classList.add('show');
+  renderButtons();
+  renderCounter();
+}
+
+function closeSentencePopup() {
+  document.getElementById('sentenceOverlay').classList.remove('show');
+  // Return to idle so Next Round button re-enables
+  state.phase = 'idle';
+  renderButtons();
+}
+
+function teamBuzzed(teamIdx) {
+  state.currentTeamIdx = teamIdx;
+  document.getElementById('sentenceOverlay').classList.remove('show');
+  state.phase = 'boxes';
+
+  const team = state.teams[teamIdx];
+  document.getElementById('statusText').innerHTML =
+    `<span class="status-team">${team.name}</span> buzzed first! Pick a Mystery Box 📦`;
+
+  // Generate box points
+  generateBoxPoints();
+
+  renderTeamList();
+  renderButtons();
+}
+
+function generateBoxPoints() {
+  const POINT_OPTIONS = [10, 20, 30, 40, 50];
+  // Pick 3 random point values (with replacement allowed for fun)
+  const pts = Array.from({length: 3}, () =>
+    POINT_OPTIONS[Math.floor(Math.random() * POINT_OPTIONS.length)]);
+  // One random box is negative
+  const negIdx = Math.floor(Math.random() * 3);
+  state.boxPoints = pts;
+  state.negativeBoxIdx = negIdx;
+}
+
+function chooseBox(boxIdx) {
+  if (state.phase !== 'boxes') return;
+  const pts = state.boxPoints[boxIdx];
+  const isNeg = boxIdx === state.negativeBoxIdx;
+  const teamIdx = state.currentTeamIdx;
+  const team = state.teams[teamIdx];
+
+  // Reveal ALL boxes
+  [0,1,2].forEach(i => {
+    const b = document.getElementById('box'+i);
+    const neg = i === state.negativeBoxIdx;
+    const p = state.boxPoints[i];
+    b.disabled = true;
+    if (neg) {
+      b.innerHTML = `<div class="box-reveal">💀 −${p}</div><div class="box-sub" style="color:rgba(255,255,255,.8)">Minus ${p} pts</div>`;
+      b.style.background = 'linear-gradient(135deg,#7b1a1a,#e74c3c)';
+    } else {
+      b.innerHTML = `<div class="box-reveal">⭐ +${p}</div><div class="box-sub" style="color:rgba(255,255,255,.8)">Plus ${p} pts</div>`;
+    }
+    if (i === boxIdx) {
+      b.style.border = '4px solid #fff';
+      b.style.boxShadow = '0 0 30px rgba(255,255,255,.5)';
+    }
+  });
+
+  // Apply score
+  if (isNeg) {
+    team.score -= pts;
+  } else {
+    team.score += pts;
+  }
+
+  state.phase = 'idle';
+  state.roundsPlayed++;
+
+  // Show result
+  setTimeout(() => showResult(team, pts, isNeg), 500);
+
+  renderTeamList();
+}
+
+function showResult(team, pts, isNeg) {
+  const popup = document.getElementById('resultPopup');
+  popup.className = 'result-popup ' + (isNeg ? 'lose' : 'gain');
+
+  document.getElementById('resultEmoji').textContent = isNeg ? '💀' : '🎉';
+  document.getElementById('resultTitle').textContent = isNeg ? 'Oops! Minus Points!' : 'Woohoo! Points Gained!';
+  document.getElementById('resultPts').className = 'result-pts ' + (isNeg ? 'lose' : 'gain');
+  document.getElementById('resultPts').textContent = (isNeg ? '−' : '+') + pts;
+  document.getElementById('resultTeamName').textContent =
+    `${team.name} · New score: ${team.score}`;
+
+  document.getElementById('resultOverlay').classList.add('show');
+}
+
+function closeResult() {
+  document.getElementById('resultOverlay').classList.remove('show');
+  state.phase = 'idle';
+
+  // Check if all sentences used
+  const available = state.sentences.filter((_, i) => !state.usedSentences.includes(i));
+  if (available.length === 0) {
+    setTimeout(showGameOver, 300);
+    return;
+  }
+
+  document.getElementById('sentenceText').textContent = '—';
+  document.getElementById('statusText').innerHTML = 'Press <strong>Next Round</strong> to continue!';
+  document.getElementById('boxesTeamLabel').textContent = '— Waiting for team —';
+
+  // Reset boxes visual
+  [0,1,2].forEach(i => {
+    const b = document.getElementById('box'+i);
+    b.style.border = '3px solid transparent';
+    b.style.boxShadow = '';
+    b.style.background = '';
+    b.className = `mystery-box box-${i+1}`;
+    b.innerHTML = `<div class="box-icon">📦</div><div class="box-label">Box ${i+1}</div><div class="box-sub">Choose me!</div>`;
+  });
+
+  renderAll();
+}
+
+function showGameOver() {
+  const sorted = [...state.teams].sort((a,b) => b.score - a.score);
+  const el = document.getElementById('finalScores');
+  el.innerHTML = sorted.map((t, i) => `
+    <div class="final-row ${i===0?'winner':''}">
+      <span class="final-name">${i===0?'🥇 ':''}${t.name}</span>
+      <span class="final-pts">${t.score} pts</span>
+    </div>
+  `).join('');
+  document.getElementById('gameOverOverlay').classList.add('show');
+}
+
+function resetGame() {
+  state.usedSentences = [];
+  state.currentSentenceIdx = null;
+  state.currentTeamIdx = null;
+  state.phase = 'idle';
+  state.roundsPlayed = 0;
+  state.teams.forEach(t => t.score = 0);
+
+  document.getElementById('sentenceText').textContent = '—';
+  document.getElementById('statusText').innerHTML = 'Press <strong>Next Round</strong> to continue!';
+  document.getElementById('boxesTeamLabel').textContent = '— Waiting for team —';
+
+  [0,1,2].forEach(i => {
+    const b = document.getElementById('box'+i);
+    b.style.border = '3px solid transparent';
+    b.style.boxShadow = '';
+    b.style.background = '';
+    b.className = `mystery-box box-${i+1}`;
+    b.innerHTML = `<div class="box-icon">📦</div><div class="box-label">Box ${i+1}</div><div class="box-sub">Choose me!</div>`;
+  });
+
+  renderAll();
+}
+
+// ══════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════
+function openSettings() {
+  // Sync draft from current state
+  draft.teamCount = state.teams.length;
+  draft.teamNames = state.teams.map(t => t.name);
+  while (draft.teamNames.length < 8) draft.teamNames.push(`Team ${draft.teamNames.length+1}`);
+
+  renderSettingsPanel();
+  document.getElementById('settingsOverlay').classList.add('show');
+}
+
+function closeSettings() {
+  document.getElementById('settingsOverlay').classList.remove('show');
+}
+
+function renderSettingsPanel() {
+  document.getElementById('teamCountDisplay').textContent = draft.teamCount;
+
+  // Team names
+  const grid = document.getElementById('teamNamesGrid');
+  grid.innerHTML = Array.from({length: draft.teamCount}, (_, i) => `
+    <div class="team-name-input-row">
+      <label style="color:${TEAM_COLORS[i]}">${i+1}</label>
+      <input type="text" maxlength="20" value="${draft.teamNames[i]}"
+        oninput="draft.teamNames[${i}]=this.value"
+        placeholder="Team ${i+1}">
+    </div>
+  `).join('');
+
+  // Sentences
+  renderSentenceList();
+}
+
+function renderSentenceList() {
+  const el = document.getElementById('sentenceList');
+  el.innerHTML = state.sentences.map((s, i) => `
+    <div class="sentence-item">
+      <span>${s}</span>
+      <button class="del-btn" onclick="deleteSentence(${i})" title="Remove">✕</button>
+    </div>
+  `).join('');
+}
+
+function changeTeamCount(delta) {
+  draft.teamCount = Math.min(8, Math.max(2, draft.teamCount + delta));
+  renderSettingsPanel();
+}
+
+function deleteSentence(idx) {
+  state.sentences.splice(idx, 1);
+  // Reset used list if sentence was used
+  state.usedSentences = state.usedSentences.filter(i => i < state.sentences.length);
+  renderSentenceList();
+  renderCounter();
+}
+
+function addSentence() {
+  const input = document.getElementById('newSentenceInput');
+  const val = input.value.trim();
+  if (!val) return;
+  state.sentences.push(val);
+  input.value = '';
+  renderSentenceList();
+  renderCounter();
+}
+
+function applySettings() {
+  // Rebuild teams, preserving scores where possible
+  const newTeams = Array.from({length: draft.teamCount}, (_, i) => ({
+    name: draft.teamNames[i] || `Team ${i+1}`,
+    score: state.teams[i] ? state.teams[i].score : 0,
+    color: TEAM_COLORS[i]
+  }));
+  state.teams = newTeams;
+
+  // Reset phase if current team no longer exists
+  if (state.currentTeamIdx !== null && state.currentTeamIdx >= state.teams.length) {
+    state.currentTeamIdx = null;
+    state.phase = 'idle';
+  }
+
+  closeSettings();
+  renderAll();
+}
+
+// ══════════════════════════════════════
+// START
+// ══════════════════════════════════════
+init();
+</script>
+</body>
+</html>
